@@ -219,18 +219,23 @@ export class TrimCommand extends Command<BaseContext> {
 				if (!await fileExists(path)) continue;
 
 				const contents = await readFile(path, { encoding: 'utf8' });
-				const json = json5.parse(contents);
-				const newJSON = JSON.stringify(json);
-		
-				await writeFile(path, newJSON);
-	
-				const oldJSONSize = contents.length;
-				const newJSONSize = newJSON.length;
-				const jsonSizeDifference = oldJSONSize - newJSONSize;
-		
-				this._savedBytes = this._savedBytes + jsonSizeDifference;
 
-				logger.success('Wrote minified JSON file:', path);
+				try {
+					const json = json5.parse(contents);
+					const newJSON = JSON.stringify(json);
+		
+					await writeFile(path, newJSON);
+		
+					const oldJSONSize = contents.length;
+					const newJSONSize = newJSON.length;
+					const jsonSizeDifference = oldJSONSize - newJSONSize;
+			
+					this._savedBytes = this._savedBytes + jsonSizeDifference;
+	
+					logger.success('Wrote minified JSON file:', path);
+				} catch {
+					logger.warning('Enable to minify JSON file:', path, '- skipping');
+				}
 			}
 		}
 
