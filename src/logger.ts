@@ -5,7 +5,7 @@ import type { BaseContext } from 'clipanion';
 
 const prefix         = '➤';
 const infoColor      = chalk.hex('#06b6d4');
-const warningColor   = chalk.hex('#ea580c');
+const warningColor   = chalk.hex('#f97316');
 const errorColor     = chalk.hex('#ef4444');
 const successColor   = chalk.hex('#84cc16');
 const separatorColor = chalk.hex('#475569');
