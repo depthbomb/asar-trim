@@ -1,5 +1,5 @@
 {
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"name": "asar-trim",
 	"author": "depthbomb",
 	"description": "An experimental CLI tool that trims unnecessary files from asar archives for Electron applications.",
@@ -16,7 +16,9 @@
 	"bugs": {
 		"url": "https://github.com/depthbomb/asar-trim/issues"
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "cross-env NODE_ENV=production webpack --config webpack.config.ts && yarn postbuild",
 		"postbuild": "ts-node scripts/post-build",
