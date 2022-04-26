@@ -234,7 +234,7 @@ export class TrimCommand extends Command<BaseContext> {
 	
 					logger.success('Wrote minified JSON file:', path);
 				} catch {
-					logger.warning('Enable to minify JSON file:', path, '- skipping');
+					logger.warning('Unable to minify JSON file:', path, '- skipping');
 				}
 			}
 		}
