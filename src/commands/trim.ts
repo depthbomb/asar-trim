@@ -1,22 +1,29 @@
-import json5                               from 'json5';
-import prettyBytes                         from 'pretty-bytes';
-import { Option, Command }                 from 'clipanion';
-import { join, resolve, basename }         from 'node:path';
-import { extractAll, createPackage }       from 'asar';
-import { rm, unlink, readFile, writeFile } from 'node:fs/promises';
+import json5                                    from 'json5';
+import prettyBytes                              from 'pretty-bytes';
+import { Option, Command }                      from 'clipanion';
+import { join, resolve, basename }              from 'node:path';
+import { extractAll, createPackageWithOptions } from 'asar';
+import { rm, unlink, readFile, writeFile }      from 'node:fs/promises';
 
-import { createLogger }                    from '../logger';
-import { walkDir, fileExists, backupFile } from '../utils';
+import { createLogger }                         from '../logger';
+import { walkDir, fileExists, backupFile }      from '../utils';
 
-import type { BaseContext }                from 'clipanion';
+import type { BaseContext }                     from 'clipanion';
+import type { CreateOptions }                   from 'asar';
 
 export class TrimCommand extends Command<BaseContext> {
 	public static override paths = [['trim'], ['t'], Command.Default];
 
 	public asarPath = Option.String('-P,--path', {
-		description: 'Path to your Electron app\'s "resources" directory where the "app.asar" file is located.',
+		description: 'Path to your Electron app\'s "resources" directory where the "app.asar" file is located',
 		arity: 1,
 		required: true
+	});
+
+	public hintFilePath = Option.String('-H,--hint-file', {
+		description: 'Path to your app\'s load order hint file, used to optimize file ordering',
+		arity: 1,
+		required: false,
 	});
 
 	public backup = Option.Boolean('-B,--backup', true, {
@@ -141,7 +148,7 @@ export class TrimCommand extends Command<BaseContext> {
 
 		const asarFile = resolve(this.asarPath, 'app.asar');
 		if (!await fileExists(asarFile)) {
-			this.context.stderr.write(`Asar file could not be found at ${this.asarPath}`);
+			logger.error('Asar file could not be found at', this.asarPath);
 			return 1;
 		}
 
@@ -231,7 +238,18 @@ export class TrimCommand extends Command<BaseContext> {
 		logger.info('Repacking app.asar');
 		
 		try {
-			await createPackage(appDir, asarFile);
+			const options: CreateOptions = {};
+			if (this.hintFilePath) {
+				this.hintFilePath = resolve(this.hintFilePath);
+				if (!await fileExists(this.hintFilePath)) {
+					logger.warning('Hint file could not be found at', this.hintFilePath, '- skipping');
+				} else {
+					logger.info('Using hint file', this.hintFilePath);
+					options.ordering = this.hintFilePath;
+				}
+			}
+
+			await createPackageWithOptions(appDir, asarFile, options);
 
 			logger.separator();
 			logger.info('Cleaning up');

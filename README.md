@@ -42,21 +42,20 @@ Many popular Electron applications today sure like to include their dev dependen
 
 This tool attempts to delete these files and repack the asar file to produce a much slimmer archive.
 
-This tool is experimental and __could__ possibly break your application if it potentially relies on a file that is deleted.
-
 # What does it do?
 
 There are a few things `asar-trim` will do when it does its optimization:
 
 - Deletes various files that have no use in the application
-  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L28)
+  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L35)
 - Minifies .json files
 - Minifies and removes unneeded properties from package.json files
 
 # Options
 
 ```
--B, --backup | Creates a backup of the original app.asar file
+-B, --backup    | Creates a backup of the original app.asar file
+-H, --hint-file | Path to your app's generated load order hint file, see https://github.com/atom/atom/issues/10163 and https://www.electronjs.org/docs/latest/api/environment-variables#electron_log_asar_reads
 ```
 
 # Planned Features
