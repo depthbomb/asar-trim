@@ -49,8 +49,9 @@ This tool is experimental and __could__ possibly break your application if it po
 There are a few things `asar-trim` will do when it does its optimization:
 
 - Deletes various files that have no use in the application
+  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L28)
 - Minifies .json files
-- Minifies and removes unneeded properties from various package.json files
+- Minifies and removes unneeded properties from package.json files
 
 # Options
 
