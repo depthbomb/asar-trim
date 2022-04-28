@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import { BannerPlugin } from 'webpack';
 import TerserPlugin from 'terser-webpack-plugin';
 import nodeExternals from 'webpack-node-externals';
 
@@ -10,11 +9,14 @@ const production = process.env.NODE_ENV === 'production';
 export default {
 	mode: process.env.NODE_ENV ?? 'development',
 	target: 'node',
-	entry: './src/index.ts',
+	entry: {
+		cli: './src/index.ts',
+		extractWorker: './src/extractWorker.ts',
+	},
 	output: {
 		clean: true,
 		path: resolve('./dist'),
-		filename: 'cli.js',
+		filename: '[name].js',
 	},
 	optimization: {
 		removeAvailableModules: true,
@@ -40,7 +42,7 @@ export default {
 	},
 	externals: [
 		nodeExternals({
-			allowlist: ['chalk', 'clipanion', 'json5', 'pretty-bytes']
+			allowlist: ['clipanion', 'json5', 'pretty-bytes']
 		})
 	]
 } as Configuration;
