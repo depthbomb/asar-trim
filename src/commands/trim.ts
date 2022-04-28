@@ -31,6 +31,10 @@ export class TrimCommand extends Command<BaseContext> {
 		description: 'Whether to backup the original app.asar file'
 	});
 
+	public keepExtracted = Option.Boolean('-K,--keep-extracted', false, {
+		description: 'Whether to keep the extracted app.asar contents after optimizing instead of deleting them'
+	});
+
 	private _savedBytes: number = 0;
 
 	private readonly _deletables = {
@@ -272,7 +276,10 @@ export class TrimCommand extends Command<BaseContext> {
 			}
 
 			await createPackageWithOptions(appDir, asarFile, options);
-			await rm(appDir, { recursive: true });
+
+			if (!this.keepExtracted) {
+				await rm(appDir, { recursive: true });
+			}
 
 			setTitle(`Reduced asar archive size by ${prettyBytes(this._savedBytes)}`);
 		});

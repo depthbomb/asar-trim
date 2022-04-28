@@ -53,13 +53,11 @@ There are a few things `asar-trim` will do when it does its optimization:
 
 # Options
 
-```
-# Creates a backup of the original app.asar file
--B, --backup
-
-# Path to your app's generated load order hint file, see https://github.com/atom/atom/issues/10163 and https://www.electronjs.org/docs/latest/api/environment-variables#electron_log_asar_reads
--H, --hint-file
-```
+| Option                    | Default Value   | Description                                                                                      |
+| ------------------------- | --------------- | ------------------------------------------------------------------------------------------------ |
+| `-B`, `--backup`          | false           | Create a backup of the original app.asar file                                                    |
+| `-K`, `--keep-extracted`  | false           | Whether to keep the extracted app.asar contents after optimizing instead of deleting them        |
+| `-H`, `--hint-file`       |                 | Path to your app's generated load order hint file, see https://github.com/atom/atom/issues/10163 |
 
 # Planned Features
 
