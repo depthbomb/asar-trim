@@ -62,6 +62,5 @@ There are a few things `asar-trim` will do when it does its optimization:
 # Planned Features
 
 - Trimming app.asar.unpacked directory
-- Update checking command
 - Improved backing up
 - Additional options to customize what files will be deleted
