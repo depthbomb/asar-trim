@@ -216,7 +216,8 @@ export class TrimCommand extends Command<BaseContext> {
 				return true;
 			}
 
-			setError('app.asar not found');
+			setError('');
+			setTitle('app.asar not found');
 
 			return false;
 		});
@@ -296,9 +297,7 @@ export class TrimCommand extends Command<BaseContext> {
 						const jsonSizeDifference = oldJSONSize - newJSONSize;
 				
 						this._savedBytes = this._savedBytes + jsonSizeDifference;
-					} catch (err: unknown) {
-						// logger.warning('Unable to minify JSON file:', path, '- skipping');
-					}
+					} catch {}
 				}
 			}
 
