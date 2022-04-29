@@ -5,7 +5,7 @@ import pkg                  from '../../package.json';
 import type { BaseContext } from 'clipanion';
 
 export class UpdateCommand extends Command<BaseContext> {
-	public static override paths = [['check-updates'], ['u']];
+	public static override paths = [['check-updates'], ['update'], ['u']];
 
 	private readonly _installedVersion: string;
 
