@@ -1,6 +1,6 @@
-import { resolve } from 'node:path';
-import TerserPlugin from 'terser-webpack-plugin';
-import nodeExternals from 'webpack-node-externals';
+import { resolve }            from 'node:path';
+import TerserPlugin           from 'terser-webpack-plugin';
+import nodeExternals          from 'webpack-node-externals';
 
 import type { Configuration } from 'webpack';
 
@@ -42,7 +42,7 @@ export default {
 	},
 	externals: [
 		nodeExternals({
-			allowlist: ['clipanion', 'json5', 'pretty-bytes']
+			allowlist: ['@octokit/request', 'clipanion', 'json5', 'pretty-bytes']
 		})
 	]
 } as Configuration;
