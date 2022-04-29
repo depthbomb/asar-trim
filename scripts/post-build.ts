@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join }                      from 'node:path';
 import { stat, readFile, writeFile } from 'node:fs/promises';
 
 const basedir = process.cwd();

@@ -1,13 +1,13 @@
 import { Cli, Builtins } from 'clipanion';
 
-import pkg               from '../package.json';
+import { VERSION }       from './constants';
 import { TrimCommand }   from './commands/trim';
 import { UpdateCommand } from './commands/update';
 
 const cli = new Cli({
-	binaryLabel: 'Asar Trimmer',
+	binaryLabel: 'Asar Trim',
 	binaryName: 'asar-trim',
-	binaryVersion: pkg.version,
+	binaryVersion: VERSION,
 });
 
 cli.register(TrimCommand);

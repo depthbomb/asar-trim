@@ -1,8 +1,8 @@
-import { Command }          from 'clipanion';
+import { Command }                         from 'clipanion';
 
-import pkg                  from '../../package.json';
+import { VERSION, REPO_AUTHOR, REPO_NAME } from '../constants';
 
-import type { BaseContext } from 'clipanion';
+import type { BaseContext }                from 'clipanion';
 
 export class UpdateCommand extends Command<BaseContext> {
 	public static override paths = [['check-updates'], ['update'], ['u']];
@@ -12,7 +12,7 @@ export class UpdateCommand extends Command<BaseContext> {
 	public constructor() {
 		super();
 
-		this._installedVersion = pkg.version;
+		this._installedVersion = VERSION;
 	};
 
 	public async execute(): Promise<number> {
@@ -21,7 +21,7 @@ export class UpdateCommand extends Command<BaseContext> {
 		const { request } = await import('@octokit/request');
 		const code = await task('Checking for new versions...', async ({ setTitle, setError }) => {
 			try {
-				const { data: remoteTag } = await request('GET /repos/{owner}/{repo}/releases/latest', { owner: 'depthbomb', repo: 'asar-trim' });
+				const { data: remoteTag } = await request('GET /repos/{owner}/{repo}/releases/latest', { owner: REPO_AUTHOR, repo: REPO_NAME });
 				if (gt(remoteTag.tag_name, this._installedVersion)) {
 					setTitle(`Version ${remoteTag.tag_name} of asar-trim is available. Use "npm i asar-trim@latest -g" to install.`);
 				} else {
