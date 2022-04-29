@@ -1,16 +1,16 @@
-import { createPackageWithOptions }        from 'asar';
-import json5                               from 'json5';
-import task                                from 'tasuku';
-import { Option, Command }                 from 'clipanion';
-import { join, resolve, basename }         from 'node:path';
-import prettyBytes                         from 'pretty-bytes';
-import { rm, unlink, readFile, writeFile } from 'node:fs/promises';
-import { Worker }                          from 'node:worker_threads';
+import { createPackageWithOptions }              from 'asar';
+import json5                                     from 'json5';
+import task                                      from 'tasuku';
+import { Option, Command }                       from 'clipanion';
+import { join, resolve, basename }               from 'node:path';
+import prettyBytes                               from 'pretty-bytes';
+import { rm, stat, unlink, readFile, writeFile } from 'node:fs/promises';
+import { Worker }                                from 'node:worker_threads';
 
-import { walkDir, fileExists, backupFile } from '../utils';
+import { walkDir, fileExists, backupFile }       from '../utils';
 
-import type { CreateOptions }              from 'asar';
-import type { BaseContext }                from 'clipanion';
+import type { CreateOptions }                    from 'asar';
+import type { BaseContext }                      from 'clipanion';
 
 export class TrimCommand extends Command<BaseContext> {
 	public static override paths = [['trim'], ['t'], Command.Default];
@@ -60,9 +60,12 @@ export class TrimCommand extends Command<BaseContext> {
 			'browsers.json',
 			'changes',
 			'ci.yml',
+			'commitlint.config.js',
+			'copyrightnotice.txt',
 			'dependabot.yml',
 			'funding.yml',
 			'jasmine.json',
+			'jest.config.js',
 			'jsl.node.conf',
 			'licence',
 			'license',
@@ -85,65 +88,120 @@ export class TrimCommand extends Command<BaseContext> {
 			'yarn.lock',
 		],
 		extensions: [
+			'.__ivy_ngcc_bak',
+			'.ai',
 			'.apache2',
 			'.applescript',
+			'.babelrc',
 			'.bak',
+			'.c',
 			'.cmd',
+			'.cs',
 			'.coffee',
+			'.dockerignore',
 			'.flow',
+			'.gyp',
+			'.gypi',
+			'.gz',
+			'.h',
 			'.hbs',
+			'.huskyrc',
+			'.info',
 			'.jsdoc',
+			'.jst',
 			'.license.txt',
+			'.lintstagedrc',
+			'.lock',
+			'.log',
 			'.map',
 			'.markdown',
 			'.md',
+			'.mit',
 			'.mkd',
 			'.nix',
 			'.patch',
+			'.pdf',
+			'.prettierignore',
+			'.prettierrc',
 			'.scss',
 			'.spec.js',
 			'.swf',
 			'.targ',
 			'.template',
+			'.toml',
 			'.tga',
 			'.tgz',
 			'.ts',
+			'.tsbuildinfo',
 			'.webmanifest',
+			'.wrapped',
 		],
 		packageJSONProperties: [
 			'author',
 			'authors',
 			'bin',
 			'browser',
+			'browserslist',
 			'bundlesize',
+			'commitlint',
+			'config',
+			'dependencies',
 			'description',
 			'devDependencies',
+			'directories',
+			'engine',
 			'engines',
+			'es2015',
+			'es2020',
+			'eslintIgnore',
+			'esm2020',
+			'exports',
+			'fesm2015',
+			'fesm2020',
+			'files',
 			'funding',
 			'gh-pages-deploy',
+			'gypfile',
 			'homepage',
 			'husky',
 			'imports',
 			'jest',
 			'jsdelivr',
 			'license',
+			'licenses',
+			'licenses',
 			'lint-staged',
+			'locales',
 			'maintainers',
+			'mocha',
+			'modes',
+			'ng-update',
 			'np',
 			'optionalDependencies',
+			'optionalDevDependencies',
 			'packageManager',
 			'peerDependencies',
 			'peerDependenciesMeta',
+			'pre-commit',
 			'prettier',
 			'private',
 			'publishConfig',
+			'react-native',
+			'readme',
+			'readmeFilename',
 			'repository',
+			'schematics',
 			'sideEffects',
+			'standard',
 			'testling',
 			'tsd',
 			'types',
+			'typesVersions',
+			'typescript',
+			'typings',
 			'typings',
 			'unpkg',
+			'verb',
 		]
 	};
 
@@ -197,7 +255,7 @@ export class TrimCommand extends Command<BaseContext> {
 			});
 		});
 
-		await task('Processing files...', async ({ setTitle, setWarning, setError }) => {
+		await task('Processing files...', async ({ setTitle }) => {
 			for await (const file of walkDir(appDir)) {
 				const { path, stats } = file;
 				const { size } = stats;
@@ -220,25 +278,9 @@ export class TrimCommand extends Command<BaseContext> {
 				}
 			
 				if (filename === 'package.json') {
-					const packageContents = await readFile(path, { encoding: 'utf8' });
-					const packageJSON = json5.parse(packageContents);
-					
-					for (const packageProperty of this._deletables.packageJSONProperties) {
-						if (packageProperty in packageJSON) {
-							delete packageJSON[packageProperty];
-						}
-					}
-			
-					const newPackageJSON = JSON.stringify(packageJSON);
-			
-					await writeFile(path, newPackageJSON);
-			
-					const oldPackageSize = packageContents.length;
-					const newPackageSize = newPackageJSON.length;
-					const packageSizeDifference = oldPackageSize - newPackageSize;
-			
-					this._savedBytes = this._savedBytes + packageSizeDifference;
-				} else if (filename.endsWith('.json')) {
+					const bytesSaved = await this._minifyPackageJSON(path);
+					this._savedBytes = this._savedBytes + bytesSaved;
+				} else if (filename.endsWith('.json') || filename.endsWith('.json5')) {
 					if (!await fileExists(path)) continue;
 	
 					const contents = await readFile(path, { encoding: 'utf8' });
@@ -263,7 +305,7 @@ export class TrimCommand extends Command<BaseContext> {
 			setTitle('Finished processing files');
 		});
 
-		await task('Repacking', async ({ setTitle, setOutput }) => {
+		await task('Repacking...', async ({ setTitle, setOutput }) => {
 			const options: CreateOptions = {};
 			if (this.hintFilePath) {
 				this.hintFilePath = resolve(this.hintFilePath);
@@ -285,5 +327,25 @@ export class TrimCommand extends Command<BaseContext> {
 		});
 
 		return 0;
+	};
+
+	private async _minifyPackageJSON(path: string): Promise<number> {
+		const { size: originalSize } = await stat(path);
+		const originalContents = await readFile(path, { encoding: 'utf8' });
+		const originalData = json5.parse(originalContents);
+
+		for (const packageProperty of this._deletables.packageJSONProperties) {
+			if (packageProperty in originalData) {
+				delete originalData[packageProperty];
+			}
+		}
+
+		const newContents = JSON.stringify(originalData);
+
+		await writeFile(path, newContents);
+
+		const { size: newSize } = await stat(path);
+
+		return originalSize - newSize;
 	};
 };

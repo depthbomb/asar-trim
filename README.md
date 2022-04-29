@@ -47,7 +47,7 @@ This tool attempts to delete these files and repack the asar file to produce a m
 There are a few things `asar-trim` will do when it does its optimization:
 
 - Deletes various files that have no use in the application
-  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L40)
+  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L40,L206)
 - Minifies .json files
 - Minifies and removes unneeded properties from package.json files
 
