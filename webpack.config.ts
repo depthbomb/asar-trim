@@ -42,7 +42,7 @@ export default {
 	},
 	externals: [
 		nodeExternals({
-			allowlist: ['@octokit/request', 'clipanion', 'json5', 'pretty-bytes']
+			allowlist: ['@octokit/request', 'semver', 'clipanion', 'json5', 'pretty-bytes']
 		})
 	]
 } as Configuration;

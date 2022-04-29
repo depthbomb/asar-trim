@@ -1,7 +1,4 @@
-import task                 from 'tasuku';
-import { gt }               from 'semver';
 import { Command }          from 'clipanion';
-import { request }          from '@octokit/request';
 
 import pkg                  from '../../package.json';
 
@@ -19,6 +16,9 @@ export class UpdateCommand extends Command<BaseContext> {
 	};
 
 	public async execute(): Promise<number> {
+		const { gt } = await import('semver');
+		const { default: task } = await import('tasuku');
+		const { request } = await import('@octokit/request');
 		const code = await task('Checking for new versions...', async ({ setTitle, setError }) => {
 			try {
 				const { data: remoteTag } = await request('GET /repos/{owner}/{repo}/releases/latest', { owner: 'depthbomb', repo: 'asar-trim' });

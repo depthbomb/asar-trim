@@ -1,13 +1,8 @@
-import { createPackageWithOptions }              from 'asar';
 import json5                                     from 'json5';
-import task                                      from 'tasuku';
 import { Option, Command }                       from 'clipanion';
 import { join, resolve, basename }               from 'node:path';
-import prettyBytes                               from 'pretty-bytes';
 import { rm, stat, unlink, readFile, writeFile } from 'node:fs/promises';
 import { Worker }                                from 'node:worker_threads';
-
-import { walkDir, fileExists, backupFile }       from '../utils';
 
 import type { CreateOptions }                    from 'asar';
 import type { BaseContext }                      from 'clipanion';
@@ -206,6 +201,11 @@ export class TrimCommand extends Command<BaseContext> {
 	};
 
 	public async execute(): Promise<number> {
+		const { default: task } = await import('tasuku');
+		const { createPackageWithOptions } = await import('asar');
+		const { default: prettyBytes } = await import('pretty-bytes');
+		const { walkDir, fileExists, backupFile } = await import('../utils');
+
 		this.asarPath = resolve(this.asarPath);
 
 		const asarFile = resolve(this.asarPath, 'app.asar');
