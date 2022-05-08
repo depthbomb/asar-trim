@@ -2390,10 +2390,10 @@ __metadata:
     asar: ^3.1.0
     babel-loader: ^8.2.5
     clipanion: ^3.2.0-rc.11
+    convert: ^4.5.0
     cross-env: ^7.0.3
     eslint: ^8.15.0
     json5: ^2.2.1
-    pretty-bytes: ^6.0.0
     release-it: ^15.0.0
     semver: ^7.3.7
     tasuku: ^2.0.0
@@ -2967,6 +2967,13 @@ __metadata:
   dependencies:
     safe-buffer: ~5.1.1
   checksum: 985d974a2d33e1a2543ada51c93e1ba2f73eaed608dc39f229afc78f71dcc4c8b7d7c684aa647e3c6a3a204027444d69e53e169ce94e8d1fa8d7dee80c9c8fed
+  languageName: node
+  linkType: hard
+
+"convert@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "convert@npm:4.5.0"
+  checksum: cf075e8eced13bf504fb76f94b4721ba68afb4465805341f7abf69f8e4e8fc4d48fe53eebe4038524475b536880a885e285dbf8436097689f4f751b7276aeadd
   languageName: node
   linkType: hard
 
@@ -5484,13 +5491,6 @@ __metadata:
   version: 2.0.0
   resolution: "prepend-http@npm:2.0.0"
   checksum: 7694a9525405447662c1ffd352fcb41b6410c705b739b6f4e3a3e21cf5fdede8377890088e8934436b8b17ba55365a615f153960f30877bf0d0392f9e93503ea
-  languageName: node
-  linkType: hard
-
-"pretty-bytes@npm:^6.0.0":
-  version: 6.0.0
-  resolution: "pretty-bytes@npm:6.0.0"
-  checksum: 0bb9f95e617236404b29a8392c6efd82d65805f622f5e809ecd70068102be857d4e3276c86d2a32fa2ef851cc29472e380945dab7bec83ec79bd57a19a10faf7
   languageName: node
   linkType: hard
 

@@ -215,9 +215,9 @@ export class TrimCommand extends Command<BaseContext> {
 	};
 
 	public async execute(): Promise<number> {
+		const { convert } = await import('convert');
 		const { default: task } = await import('tasuku');
 		const { createPackageWithOptions } = await import('asar');
-		const { default: prettyBytes } = await import('pretty-bytes');
 		const { walkDir, fileExists, backupFile } = await import('../utils');
 
 		this.asarPath = resolve(this.asarPath);
@@ -339,7 +339,9 @@ export class TrimCommand extends Command<BaseContext> {
 				await rm(appDir, { recursive: true });
 			}
 
-			setTitle(`Reduced asar archive size by ${prettyBytes(this._savedBytes)}`);
+			const savedMB = convert(this._savedBytes, 'bytes').to('MB');
+			const roundedSavedMB = Math.round((savedMB + Number.EPSILON) * 100) / 100;
+			setTitle(`Reduced asar archive size by ${roundedSavedMB}MB`);
 		});
 
 		return 0;
