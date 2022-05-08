@@ -5,7 +5,7 @@ import { VERSION, REPO_AUTHOR, REPO_NAME } from '../constants';
 import type { BaseContext }                from 'clipanion';
 
 export class UpdateCommand extends Command<BaseContext> {
-	public static override paths = [['check-updates'], ['update'], ['u']];
+	public static override paths = [['update'], ['u']];
 
 	private readonly _installedVersion: string;
 
