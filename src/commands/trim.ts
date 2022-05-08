@@ -8,25 +8,25 @@ import type { CreateOptions }                    from 'asar';
 import type { BaseContext }                      from 'clipanion';
 
 export class TrimCommand extends Command<BaseContext> {
-	public static override paths = [['trim'], ['t'], Command.Default];
+	public static override paths = [Command.Default];
 
-	public asarPath = Option.String('-P,--path', {
+	public asarPath = Option.String('-p,--path', {
 		description: 'Path to your Electron app\'s "resources" directory where the "app.asar" file is located',
 		arity: 1,
 		required: true
 	});
 
-	public hintFilePath = Option.String('-H,--hint-file', {
+	public hintFilePath = Option.String('-h,--hint-file', {
 		description: 'Path to your app\'s load order hint file, used to optimize file ordering',
 		arity: 1,
 		required: false,
 	});
 
-	public backup = Option.Boolean('-B,--backup', false, {
+	public backup = Option.Boolean('-b,--backup', false, {
 		description: 'Whether to backup the original app.asar file'
 	});
 
-	public keepExtracted = Option.Boolean('-K,--keep-extracted', false, {
+	public keepExtracted = Option.Boolean('-k,--keep-extracted', false, {
 		description: 'Whether to keep the extracted app.asar contents after optimizing instead of deleting them'
 	});
 
@@ -34,6 +34,8 @@ export class TrimCommand extends Command<BaseContext> {
 
 	private readonly _deletables = {
 		files: [
+			'.airtap.yml',
+			'.babelrc',
 			'.editorconfig',
 			'.eslintignore',
 			'.eslintrc',
@@ -91,8 +93,10 @@ export class TrimCommand extends Command<BaseContext> {
 			'.bak',
 			'.c',
 			'.cmd',
-			'.cs',
 			'.coffee',
+			'.cpp',
+			'.cs',
+			'.dds',
 			'.dockerignore',
 			'.flow',
 			'.gyp',
@@ -100,10 +104,17 @@ export class TrimCommand extends Command<BaseContext> {
 			'.gz',
 			'.h',
 			'.hbs',
+			'.hpp',
 			'.huskyrc',
+			'.ilk',
 			'.info',
+			'.inl',
+			'.iobj',
+			'.ipdb',
 			'.jsdoc',
 			'.jst',
+			'.lib',
+			'.license',
 			'.license.txt',
 			'.lintstagedrc',
 			'.lock',
@@ -126,10 +137,13 @@ export class TrimCommand extends Command<BaseContext> {
 			'.toml',
 			'.tga',
 			'.tgz',
+			'.tlog',
 			'.ts',
 			'.tsbuildinfo',
+			'.vcxproj',
 			'.webmanifest',
 			'.wrapped',
+			'.x',
 		],
 		packageJSONProperties: [
 			'author',
@@ -216,7 +230,7 @@ export class TrimCommand extends Command<BaseContext> {
 				return true;
 			}
 
-			setError('');
+			setError();
 			setTitle('app.asar not found');
 
 			return false;
@@ -243,38 +257,43 @@ export class TrimCommand extends Command<BaseContext> {
 
 		const appDir = join(this.asarPath, 'app');
 
-		await task('Extracting app.asar...', async ({ setTitle }) => {
-			return new Promise((resolve, reject) => {
-				const workerPath = join(__dirname, 'extractWorker.js');
-				const worker = new Worker(workerPath, { workerData: [asarFile, appDir] });
-				
-				worker.once('error', reject);
-				worker.once('exit', (code: number) => {
-					setTitle('Extracted app.asar');
-					resolve(null);
-				});
+		await task('Extracting app.asar...', async ({ setTitle }) => new Promise((resolve, reject) => {
+			const workerPath = join(__dirname, 'extractWorker.js');
+			const worker = new Worker(workerPath, { workerData: [asarFile, appDir] });
+			
+			worker.once('error', reject);
+			worker.once('exit', (code: number) => {
+				setTitle('Extracted app.asar');
+				resolve(null);
 			});
-		});
+		}));
 
 		await task('Processing files...', async ({ setTitle }) => {
+			// TODO rewrite pretty much all of this
+
+			walk:
 			for await (const file of walkDir(appDir)) {
 				const { path, stats } = file;
 				const { size } = stats;
 				const filename = basename(path);
-	
+
 				for (const deletableFile of this._deletables.files) {
-					if (filename.toLowerCase() === deletableFile) {
-						this._savedBytes = this._savedBytes + size;
-						await unlink(path);
-					}
+					if (filename.toLowerCase() !== deletableFile) continue;
+
+					this._savedBytes = this._savedBytes + size;
+					await unlink(path);
+
+					continue walk;
 				}
 		
 				for (const deletableExtension of this._deletables.extensions) {
 					if (path.toLowerCase().endsWith(deletableExtension)) {
-						if (await fileExists(path)) {
-							this._savedBytes = this._savedBytes + size;
-							await unlink(path);
-						}
+						if (!await fileExists(path) || stats.isDirectory()) continue;
+
+						this._savedBytes = this._savedBytes + size;
+						await unlink(path);
+
+						continue walk;
 					}
 				}
 			
@@ -282,8 +301,6 @@ export class TrimCommand extends Command<BaseContext> {
 					const bytesSaved = await this._minifyPackageJSON(path);
 					this._savedBytes = this._savedBytes + bytesSaved;
 				} else if (filename.endsWith('.json') || filename.endsWith('.json5')) {
-					if (!await fileExists(path)) continue;
-	
 					const contents = await readFile(path, { encoding: 'utf8' });
 	
 					try {
@@ -340,11 +357,9 @@ export class TrimCommand extends Command<BaseContext> {
 		}
 
 		const newContents = JSON.stringify(originalData);
-
 		await writeFile(path, newContents);
 
 		const { size: newSize } = await stat(path);
-
 		return originalSize - newSize;
 	};
 };
