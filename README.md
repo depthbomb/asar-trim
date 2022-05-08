@@ -13,7 +13,6 @@
 					<a href="https://github.com/depthbomb/asar-trim/releases/latest"><img src="https://img.shields.io/github/release-date/depthbomb/asar-trim.svg?label=Released&logo=github&style=flat-square"></a>
 					<a href="https://github.com/depthbomb/asar-trim/releases/latest"><img src="https://img.shields.io/github/release/depthbomb/asar-trim.svg?label=Stable&logo=github&style=flat-square"></a>
 					<a href="https://github.com/depthbomb/asar-trim"><img src="https://img.shields.io/github/repo-size/depthbomb/asar-trim.svg?label=Repo%20Size&logo=github&style=flat-square"></a>
-					<a href="https://github.com/depthbomb/asar-trim/releases/latest"><img src="https://img.shields.io/github/downloads/depthbomb/asar-trim/latest/total.svg?label=Downloads&logo=github&style=flat-square"></a>
 				</p>
 				<p>
 					<a href="https://ko-fi.com/O4O1DV77" target="_blank"><img height="36" src="https://cdn.ko-fi.com/cdn/kofi1.png?v=3" alt="Buy Me a Coffee at ko-fi.com" /></a>
@@ -33,7 +32,7 @@ npm i asar-trim -g
 # Usage
 
 ```
-$ asar-trim -P <path to resources containing app.asar>
+$ asar-trim -p <path to resources containing app.asar>
 ```
 
 # What is it?
@@ -47,17 +46,44 @@ This tool attempts to delete these files and repack the asar file to produce a m
 There are a few things `asar-trim` will do when it does its optimization:
 
 - Deletes various files that have no use in the application
-  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L40,L206)
+  - You can see what is deleted [here](https://github.com/depthbomb/asar-trim/blob/master/src/commands/trim.ts#L35,L215)
 - Minifies .json files
 - Minifies and removes unneeded properties from package.json files
 
-# Options
+# Commands
+
+## `trim`
+
+Trims the app.asar file at the location denoted by the path provided by the `-p` option.
+
+### Usage
+
+```
+$ asar-trim trim -p .
+$ asar-trim -p .
+```
+
+### Options
 
 | Option                    | Default Value   | Description                                                                                      |
 | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------ |
-| `-B`, `--backup`          | false           | Create a backup of the original app.asar file                                                    |
-| `-K`, `--keep-extracted`  | false           | Whether to keep the extracted app.asar contents after optimizing instead of deleting them        |
-| `-H`, `--hint-file`       |                 | Path to your app's generated load order hint file, see https://github.com/atom/atom/issues/10163 |
+| `-b`, `--backup`          | false           | Create a backup of the original app.asar file                                                    |
+| `-k`, `--keep-extracted`  | false           | Whether to keep the extracted app.asar contents after optimizing instead of deleting them        |
+| `-h`, `--hint-file`       |                 | Path to your app's generated load order hint file, see https://github.com/atom/atom/issues/10163 |
+
+---
+
+## `update`
+
+Checks for updates
+
+### Usage
+
+```
+$ asar-trim update
+```
+
+---
 
 # Planned Features
 
