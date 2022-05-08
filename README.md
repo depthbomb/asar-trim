@@ -52,14 +52,13 @@ There are a few things `asar-trim` will do when it does its optimization:
 
 # Commands
 
-## `trim`
+## `<default>`
 
 Trims the app.asar file at the location denoted by the path provided by the `-p` option.
 
 ### Usage
 
 ```
-$ asar-trim trim -p .
 $ asar-trim -p .
 ```
 
