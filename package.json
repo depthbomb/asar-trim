@@ -20,47 +20,34 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "cross-env NODE_ENV=production webpack --config webpack.config.ts && yarn postbuild",
-		"postbuild": "ts-node scripts/post-build",
-		"prerelease": "yarn build",
-		"release": "release-it",
-		"lint": "eslint ./src --ext .ts"
+		"start": "node .",
+		"dist": "cross-env NODE_ENV=production tsup",
+		"build": "cross-env NODE_ENV=development tsup",
+		"release": "yarn dist && release-it"
 	},
 	"dependencies": {
 		"asar": "^3.1.0",
 		"clipanion": "^3.2.0-rc.11",
+		"consola": "^2.15.3",
 		"convert": "^4.5.0",
 		"json5": "^2.2.1",
-		"semver": "^7.3.7",
-		"tasuku": "^2.0.0"
+		"semver": "^7.3.7"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.18.6",
-		"@babel/plugin-transform-runtime": "^7.18.6",
-		"@babel/preset-env": "^7.18.6",
-		"@babel/preset-typescript": "^7.18.6",
+		"@swc/core": "^1.2.215",
 		"@tsconfig/recommended": "^1.0.1",
-		"@types/babel__core": "^7.1.19",
-		"@types/babel__plugin-transform-runtime": "^7.9.2",
-		"@types/babel__preset-env": "^7.9.2",
-		"@types/cli-progress": "^3.11.0",
 		"@types/eslint": "^8.4.5",
 		"@types/node": "^18.0.5",
 		"@types/semver": "^7.3.10",
-		"@types/webpack-node-externals": "^2.5.3",
 		"@typescript-eslint/eslint-plugin": "^5.30.6",
 		"@typescript-eslint/parser": "^5.30.6",
-		"babel-loader": "^8.2.5",
 		"cross-env": "^7.0.3",
 		"eslint": "^8.20.0",
 		"release-it": "^15.1.2",
-		"terser-webpack-plugin": "^5.3.3",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.4.0",
-		"typescript": "^4.7.4",
-		"webpack": "^5.73.0",
-		"webpack-cli": "^4.10.0",
-		"webpack-node-externals": "^3.0.0"
+		"tsup": "^6.1.3",
+		"typescript": "^4.7.4"
 	},
 	"packageManager": "yarn@3.2.1"
 }
