@@ -1,6 +1,5 @@
 import { join, dirname, basename }   from 'node:path';
 import { cp, stat, unlink, readdir } from 'node:fs/promises';
-
 import type { Stats }                from 'node:fs';
 
 interface IWalkedFile {
