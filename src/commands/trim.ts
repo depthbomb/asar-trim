@@ -3,18 +3,13 @@ import { Option, Command }                       from 'clipanion';
 import { join, resolve, basename }               from 'node:path';
 import { rm, stat, unlink, readFile, writeFile } from 'node:fs/promises';
 import { Worker }                                from 'node:worker_threads';
-
 import type { CreateOptions }                    from 'asar';
 import type { BaseContext }                      from 'clipanion';
 
 export class TrimCommand extends Command<BaseContext> {
 	public static override paths = [Command.Default];
 
-	public asarPath = Option.String('-p,--path', {
-		description: 'Path to your Electron app\'s "resources" directory where the "app.asar" file is located',
-		arity: 1,
-		required: true
-	});
+	public asarPath = Option.String();
 
 	public hintFilePath = Option.String('-h,--hint-file', {
 		description: 'Path to your app\'s load order hint file, used to optimize file ordering',
@@ -113,6 +108,7 @@ export class TrimCommand extends Command<BaseContext> {
 			'.ipdb',
 			'.jsdoc',
 			'.jst',
+			'.jsx',
 			'.lib',
 			'.license',
 			'.license.txt',
@@ -140,7 +136,10 @@ export class TrimCommand extends Command<BaseContext> {
 			'.tlog',
 			'.ts',
 			'.tsbuildinfo',
+			'.tsx',
 			'.vcxproj',
+			'.vdproj',
+			'.vue',
 			'.webmanifest',
 			'.wrapped',
 			'.x',
