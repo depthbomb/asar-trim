@@ -32,7 +32,7 @@ npm i asar-trim -g
 # Usage
 
 ```
-$ asar-trim -p <path to resources containing app.asar>
+$ asar-trim <path to resources containing app.asar>
 ```
 
 # What is it?
@@ -54,12 +54,12 @@ There are a few things `asar-trim` will do when it does its optimization:
 
 ## `<default>`
 
-Trims the app.asar file at the location denoted by the path provided by the `-p` option.
+Trims the app.asar file at the location denoted by the path provided.
 
 ### Usage
 
 ```
-$ asar-trim -p .
+$ asar-trim .
 ```
 
 ### Options
@@ -69,18 +69,6 @@ $ asar-trim -p .
 | `-b`, `--backup`          | false           | Create a backup of the original app.asar file                                                    |
 | `-k`, `--keep-extracted`  | false           | Whether to keep the extracted app.asar contents after optimizing instead of deleting them        |
 | `-h`, `--hint-file`       |                 | Path to your app's generated load order hint file, see https://github.com/atom/atom/issues/10163 |
-
----
-
-## `update`
-
-Checks for updates
-
-### Usage
-
-```
-$ asar-trim update
-```
 
 ---
 
