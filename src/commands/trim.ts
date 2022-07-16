@@ -1,4 +1,8 @@
+import { createPackageWithOptions }              from 'asar';
 import json5                                     from 'json5';
+import { convert }                               from 'convert';
+import consola                                   from 'consola';
+import { walkDir, fileExists }                   from '../utils';
 import { Option, Command }                       from 'clipanion';
 import { join, resolve, basename }               from 'node:path';
 import { rm, stat, unlink, readFile, writeFile } from 'node:fs/promises';
@@ -213,135 +217,115 @@ export class TrimCommand extends Command<BaseContext> {
 		]
 	};
 
-	public async execute(): Promise<number> {
-		const { convert } = await import('convert');
-		const { default: task } = await import('tasuku');
-		const { createPackageWithOptions } = await import('asar');
-		const { walkDir, fileExists, backupFile } = await import('../utils');
-
+	public async execute(): Promise<number | void> {
 		this.asarPath = resolve(this.asarPath);
 
 		const asarFile = resolve(this.asarPath, 'app.asar');
-		const discoverTask = await task('Looking for app.asar...', async ({ setTitle, setError }) => {
-			if (await fileExists(asarFile)) {
-				setTitle('app.asar found');
-
-				return true;
-			}
-
-			setError();
-			setTitle('app.asar not found');
-
-			return false;
-		});
-
-		if (!discoverTask.result) return 1;
-
-		if (this.backup) {
-			const backupTask = await task('Backing up original app.asar...', async ({ setTitle, setError }) => {
-				try {
-					await backupFile(asarFile);
-
-					setTitle('Backed up app.asar');
-					return true;
-				} catch (err: unknown) {
-					
-					setError(<Error>err);
-					return false;
-				}
-			});
-
-			if (!backupTask) return 1;
+		if (!(await fileExists(asarFile))) {
+			consola.fatal('app.asar not found at', this.asarPath);
+			return 1;
 		}
 
-		const appDir = join(this.asarPath, 'app');
+		if (this.backup) {
+			const { backupFile } = await import('../utils');
+			consola.info('Backing up app.asar');
+			try {
+				await backupFile(asarFile);
+			} catch (err: unknown) {
+				consola.fatal(err);
+				return 1;
+			}
+		}
 
-		await task('Extracting app.asar...', async ({ setTitle }) => new Promise((resolve, reject) => {
+		consola.info('Extracting app.asar');
+
+		const appDir = join(this.asarPath, 'app');
+		const extractionResult = await new Promise<number | Error>((res, rej) => {
 			const workerPath = join(__dirname, 'extractWorker.js');
 			const worker = new Worker(workerPath, { workerData: [asarFile, appDir] });
 			
-			worker.once('error', reject);
-			worker.once('exit', (code: number) => {
-				setTitle('Extracted app.asar');
-				resolve(null);
-			});
-		}));
+			worker.once('error', (err: Error) => rej(err));
+			worker.once('exit', (code: number) => res(code));
+		});
 
-		await task('Processing files...', async ({ setTitle }) => {
-			// TODO rewrite pretty much all of this
+		if (extractionResult !== 0) {
+			consola.fatal(extractionResult);
+			return 1;
+		}
 
-			walk:
-			for await (const file of walkDir(appDir)) {
-				const { path, stats } = file;
-				const { size } = stats;
-				const filename = basename(path);
+		consola.info('Extracted app.asar, processing files');
 
-				for (const deletableFile of this._deletables.files) {
-					if (filename.toLowerCase() !== deletableFile) continue;
+		// TODO rewrite pretty much all of this
+		walk:
+		for await (const file of walkDir(appDir)) {
+			const { path, stats } = file;
+			const { size } = stats;
+			const filename = basename(path);
+
+			for (const deletableFile of this._deletables.files) {
+				if (filename.toLowerCase() !== deletableFile) continue;
+
+				this._savedBytes = this._savedBytes + size;
+				await unlink(path);
+
+				continue walk;
+			}
+	
+			for (const deletableExtension of this._deletables.extensions) {
+				if (path.toLowerCase().endsWith(deletableExtension)) {
+					if (!await fileExists(path) || stats.isDirectory()) continue;
 
 					this._savedBytes = this._savedBytes + size;
 					await unlink(path);
 
 					continue walk;
 				}
+			}
 		
-				for (const deletableExtension of this._deletables.extensions) {
-					if (path.toLowerCase().endsWith(deletableExtension)) {
-						if (!await fileExists(path) || stats.isDirectory()) continue;
+			if (filename === 'package.json') {
+				const bytesSaved = await this._minifyPackageJSON(path);
+				this._savedBytes = this._savedBytes + bytesSaved;
+			} else if (filename.endsWith('.json') || filename.endsWith('.json5')) {
+				const contents = await readFile(path, { encoding: 'utf8' });
 
-						this._savedBytes = this._savedBytes + size;
-						await unlink(path);
-
-						continue walk;
-					}
-				}
+				try {
+					const json = json5.parse(contents);
+					const newJSON = JSON.stringify(json);
+		
+					await writeFile(path, newJSON);
+		
+					const oldJSONSize = contents.length;
+					const newJSONSize = newJSON.length;
+					const jsonSizeDifference = oldJSONSize - newJSONSize;
 			
-				if (filename === 'package.json') {
-					const bytesSaved = await this._minifyPackageJSON(path);
-					this._savedBytes = this._savedBytes + bytesSaved;
-				} else if (filename.endsWith('.json') || filename.endsWith('.json5')) {
-					const contents = await readFile(path, { encoding: 'utf8' });
-	
-					try {
-						const json = json5.parse(contents);
-						const newJSON = JSON.stringify(json);
-			
-						await writeFile(path, newJSON);
-			
-						const oldJSONSize = contents.length;
-						const newJSONSize = newJSON.length;
-						const jsonSizeDifference = oldJSONSize - newJSONSize;
-				
-						this._savedBytes = this._savedBytes + jsonSizeDifference;
-					} catch {}
-				}
+					this._savedBytes = this._savedBytes + jsonSizeDifference;
+				} catch {}
 			}
+		}
 
-			setTitle('Finished processing files');
-		});
+		consola.info('Finished processing files, repacking');
 
-		await task('Repacking...', async ({ setTitle, setOutput }) => {
-			const options: CreateOptions = {};
-			if (this.hintFilePath) {
-				this.hintFilePath = resolve(this.hintFilePath);
-				if (!await fileExists(this.hintFilePath)) {
-					setOutput(`Hint file could not be found at ${this.hintFilePath}, skipping`);
-				} else {
-					setOutput(`Using hint file ${this.hintFilePath}`);
-					options.ordering = this.hintFilePath;
-				}
+		const options: CreateOptions = {};
+		if (this.hintFilePath) {
+			this.hintFilePath = resolve(this.hintFilePath);
+			if (!await fileExists(this.hintFilePath)) {
+				consola.warn(`Hint file could not be found at ${this.hintFilePath}, skipping`);
+			} else {
+				consola.info(`Using hint file ${this.hintFilePath}`);
+				options.ordering = this.hintFilePath;
 			}
+		}
 
-			await createPackageWithOptions(appDir, asarFile, options);
+		await createPackageWithOptions(appDir, asarFile, options);
 
-			if (!this.keepExtracted) {
-				await rm(appDir, { recursive: true });
-			}
+		if (!this.keepExtracted) {
+			await rm(appDir, { recursive: true });
+		}
 
-			const savedMB = convert(this._savedBytes, 'bytes').to('MB');
-			const roundedSavedMB = Math.round((savedMB + Number.EPSILON) * 100) / 100;
-			setTitle(`Reduced asar archive size by ${roundedSavedMB}MB`);
-		});
+		const savedMB = convert(this._savedBytes, 'bytes').to('MB');
+		const roundedSavedMB = Math.round((savedMB + Number.EPSILON) * 100) / 100;
+
+		consola.info(`Reduced asar archive size by ${roundedSavedMB}MB`);
 
 		return 0;
 	};

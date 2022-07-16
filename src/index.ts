@@ -9,7 +9,6 @@ const cli = new Cli({
 });
 
 cli.register(TrimCommand);
-
 cli.register(Builtins.VersionCommand);
 cli.register(Builtins.HelpCommand);
 
