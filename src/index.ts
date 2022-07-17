@@ -4,7 +4,7 @@ import { TrimCommand }   from './commands/trim';
 const cli = new Cli({
 	binaryLabel: 'Asar Trim',
 	binaryName: 'asar-trim',
-	binaryVersion: '1.0.0',
+	binaryVersion: '1.0.1',
 });
 
 cli.register(TrimCommand);
