@@ -1,5 +1,5 @@
 {
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"name": "asar-trim",
 	"author": "depthbomb",
 	"description": "An experimental CLI tool that trims unnecessary files from asar archives for Electron applications.",
