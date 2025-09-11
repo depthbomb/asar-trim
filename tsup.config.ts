@@ -1,17 +1,18 @@
 import { defineConfig } from 'tsup';
 
-export default defineConfig((options) => ({
+export default defineConfig(() => ({
 	clean: true,
 	entry: {
-		cli: 'src/index.ts',
-		extractWorker: 'src/extractWorker.ts'
+		cli: 'src/index.ts'
 	},
 	format: 'cjs',
+	target: 'node22',
 	dts: false,
 	minify: true,
-	skipNodeModulesBundle: true,
-	target: 'node16',
+	skipNodeModulesBundle: false,
+	splitting: false,
+	keepNames: false,
+	noExternal: [/.*/],
 	tsconfig: './tsconfig.json',
-	splitting: true,
 	onSuccess: 'ts-node scripts/post-build'
 }));

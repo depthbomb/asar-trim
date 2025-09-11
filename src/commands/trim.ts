@@ -1,14 +1,13 @@
-import { createPackageWithOptions }              from 'asar';
-import json5                                     from 'json5';
-import { convert }                               from 'convert';
-import consola                                   from 'consola';
-import { walkDir, fileExists }                   from '../utils';
-import { Option, Command }                       from 'clipanion';
-import { join, resolve, basename }               from 'node:path';
+import json5 from 'json5';
+import consola from 'consola';
+import { convert } from 'convert';
+import { Option, Command } from 'clipanion';
+import { join, resolve, basename } from 'node:path';
+import { walkDir, fileExists, backupFile } from '../utils';
+import { extractAll, createPackageWithOptions } from '@electron/asar';
 import { rm, stat, unlink, readFile, writeFile } from 'node:fs/promises';
-import { Worker }                                from 'node:worker_threads';
-import type { CreateOptions }                    from 'asar';
-import type { BaseContext }                      from 'clipanion';
+import type { BaseContext } from 'clipanion';
+import type { CreateOptions } from '@electron/asar';
 
 export class TrimCommand extends Command<BaseContext> {
 	public static override paths = [Command.Default];
@@ -149,8 +148,6 @@ export class TrimCommand extends Command<BaseContext> {
 			'.x',
 		],
 		packageJSONProperties: [
-			'author',
-			'authors',
 			'bin',
 			'browser',
 			'browserslist',
@@ -158,7 +155,6 @@ export class TrimCommand extends Command<BaseContext> {
 			'commitlint',
 			'config',
 			'dependencies',
-			'description',
 			'devDependencies',
 			'directories',
 			'engine',
@@ -171,20 +167,14 @@ export class TrimCommand extends Command<BaseContext> {
 			'fesm2015',
 			'fesm2020',
 			'files',
-			'funding',
 			'gh-pages-deploy',
 			'gypfile',
-			'homepage',
 			'husky',
 			'imports',
 			'jest',
 			'jsdelivr',
-			'license',
-			'licenses',
-			'licenses',
 			'lint-staged',
 			'locales',
-			'maintainers',
 			'mocha',
 			'modes',
 			'ng-update',
@@ -201,7 +191,6 @@ export class TrimCommand extends Command<BaseContext> {
 			'react-native',
 			'readme',
 			'readmeFilename',
-			'repository',
 			'schematics',
 			'sideEffects',
 			'standard',
@@ -217,7 +206,7 @@ export class TrimCommand extends Command<BaseContext> {
 		]
 	};
 
-	public async execute(): Promise<number | void> {
+	public async execute() {
 		this.asarPath = resolve(this.asarPath);
 
 		const asarFile = resolve(this.asarPath, 'app.asar');
@@ -227,7 +216,6 @@ export class TrimCommand extends Command<BaseContext> {
 		}
 
 		if (this.backup) {
-			const { backupFile } = await import('../utils');
 			consola.info('Backing up app.asar');
 			try {
 				await backupFile(asarFile);
@@ -240,65 +228,42 @@ export class TrimCommand extends Command<BaseContext> {
 		consola.info('Extracting app.asar');
 
 		const appDir = join(this.asarPath, 'app');
-		const extractionResult = await new Promise<number | Error>((res, rej) => {
-			const workerPath = join(__dirname, 'extractWorker.js');
-			const worker = new Worker(workerPath, { workerData: [asarFile, appDir] });
-			
-			worker.once('error', (err: Error) => rej(err));
-			worker.once('exit', (code: number) => res(code));
-		});
 
-		if (extractionResult !== 0) {
-			consola.fatal(extractionResult);
-			return 1;
-		}
+		extractAll(asarFile, appDir);
 
 		consola.info('Extracted app.asar, processing files');
 
-		// TODO rewrite pretty much all of this
-		walk:
 		for await (const file of walkDir(appDir)) {
 			const { path, stats } = file;
-			const { size } = stats;
-			const filename = basename(path);
+			const { size }        = stats;
+			const filename        = basename(path).toLowerCase();
 
-			for (const deletableFile of this._deletables.files) {
-				if (filename.toLowerCase() !== deletableFile) continue;
-
-				this._savedBytes = this._savedBytes + size;
+			if (this._deletables.files.includes(filename)) {
+				this._savedBytes += size;
 				await unlink(path);
-
-				continue walk;
+				continue;
 			}
-	
-			for (const deletableExtension of this._deletables.extensions) {
-				if (path.toLowerCase().endsWith(deletableExtension)) {
-					if (!await fileExists(path) || stats.isDirectory()) continue;
 
-					this._savedBytes = this._savedBytes + size;
+			if (this._deletables.extensions.some(ext => path.toLowerCase().endsWith(ext))) {
+				if (await fileExists(path) && !stats.isDirectory()) {
+					this._savedBytes += size;
 					await unlink(path);
-
-					continue walk;
 				}
+				continue;
 			}
-		
+
 			if (filename === 'package.json') {
 				const bytesSaved = await this._minifyPackageJSON(path);
-				this._savedBytes = this._savedBytes + bytesSaved;
+				this._savedBytes += bytesSaved;
 			} else if (filename.endsWith('.json') || filename.endsWith('.json5')) {
-				const contents = await readFile(path, { encoding: 'utf8' });
-
 				try {
-					const json = json5.parse(contents);
-					const newJSON = JSON.stringify(json);
-		
+					const contents = await readFile(path, { encoding: 'utf8' });
+					const json     = json5.parse(contents);
+					const newJSON  = JSON.stringify(json);
+
 					await writeFile(path, newJSON);
-		
-					const oldJSONSize = contents.length;
-					const newJSONSize = newJSON.length;
-					const jsonSizeDifference = oldJSONSize - newJSONSize;
-			
-					this._savedBytes = this._savedBytes + jsonSizeDifference;
+
+					this._savedBytes += contents.length - newJSON.length;
 				} catch {}
 			}
 		}
@@ -322,18 +287,18 @@ export class TrimCommand extends Command<BaseContext> {
 			await rm(appDir, { recursive: true });
 		}
 
-		const savedMB = convert(this._savedBytes, 'bytes').to('MB');
+		const savedMB        = convert(this._savedBytes, 'bytes').to('MB');
 		const roundedSavedMB = Math.round((savedMB + Number.EPSILON) * 100) / 100;
 
 		consola.info(`Reduced asar archive size by ${roundedSavedMB}MB`);
 
 		return 0;
-	};
+	}
 
-	private async _minifyPackageJSON(path: string): Promise<number> {
+	private async _minifyPackageJSON(path: string) {
 		const { size: originalSize } = await stat(path);
-		const originalContents = await readFile(path, { encoding: 'utf8' });
-		const originalData = json5.parse(originalContents);
+		const originalContents       = await readFile(path, { encoding: 'utf8' });
+		const originalData           = json5.parse(originalContents);
 
 		for (const packageProperty of this._deletables.packageJSONProperties) {
 			if (packageProperty in originalData) {
@@ -342,9 +307,11 @@ export class TrimCommand extends Command<BaseContext> {
 		}
 
 		const newContents = JSON.stringify(originalData);
+
 		await writeFile(path, newContents);
 
 		const { size: newSize } = await stat(path);
+
 		return originalSize - newSize;
-	};
-};
+	}
+}
