@@ -154,6 +154,7 @@ export class TrimCommand extends Command<BaseContext> {
 			'bundlesize',
 			'commitlint',
 			'config',
+			'description',
 			'dependencies',
 			'devDependencies',
 			'directories',
@@ -177,6 +178,7 @@ export class TrimCommand extends Command<BaseContext> {
 			'locales',
 			'mocha',
 			'modes',
+			'name',
 			'ng-update',
 			'np',
 			'optionalDependencies',
@@ -203,6 +205,7 @@ export class TrimCommand extends Command<BaseContext> {
 			'typings',
 			'unpkg',
 			'verb',
+			'version',
 		]
 	};
 
