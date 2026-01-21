@@ -4,8 +4,8 @@
 	"author": "depthbomb",
 	"description": "An experimental CLI tool that trims unnecessary files from asar archives for Electron applications.",
 	"license": "MIT",
-	"main": "dist/cli.js",
-	"bin": "dist/cli.js",
+	"main": "dist/cli.cjs",
+	"bin": "dist/cli.cjs",
 	"publishConfig": {
 		"access": "public"
 	},
@@ -21,33 +21,33 @@
 	],
 	"scripts": {
 		"start": "node .",
-		"dist": "cross-env NODE_ENV=production tsup",
-		"build": "cross-env NODE_ENV=development tsup",
+		"dist": "cross-env NODE_ENV=production tsdown",
+		"build": "cross-env NODE_ENV=development tsdown",
 		"release": "yarn dist && release-it"
 	},
 	"dependencies": {
 		"@electron/asar": "^4.0.1",
 		"clipanion": "^4.0.0-rc.4",
 		"consola": "^3.4.2",
-		"convert": "^5.12.0",
+		"convert": "^6.0.0",
 		"json5": "^2.2.3",
-		"semver": "^7.7.2"
+		"semver": "^7.7.3"
 	},
 	"devDependencies": {
-		"@swc/core": "^1.13.5",
-		"@tsconfig/recommended": "^1.0.10",
+		"@swc/core": "^1.15.10",
+		"@tsconfig/recommended": "^1.0.13",
 		"@types/eslint": "^9.6.1",
-		"@types/node": "^18.19.124",
+		"@types/node": "^24.10.9",
 		"@types/semver": "^7.7.1",
-		"@typescript-eslint/eslint-plugin": "^8.43.0",
-		"@typescript-eslint/parser": "^8.43.0",
-		"cross-env": "^10.0.0",
-		"eslint": "^9.35.0",
-		"release-it": "^19.0.4",
+		"@typescript-eslint/eslint-plugin": "^8.53.1",
+		"@typescript-eslint/parser": "^8.53.1",
+		"cross-env": "^10.1.0",
+		"eslint": "^9.39.2",
+		"release-it": "^19.2.4",
 		"ts-node": "^10.9.2",
+		"tsdown": "^0.20.0-beta.4",
 		"tslib": "^2.8.1",
-		"tsup": "^8.5.0",
-		"typescript": "^5.9.2"
+		"typescript": "^5.9.3"
 	},
-	"packageManager": "yarn@4.9.4"
+	"packageManager": "yarn@4.12.0"
 }

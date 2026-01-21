@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { stat, readFile, writeFile } from 'node:fs/promises';
 
 const basedir = process.cwd();
-const outfile = join(basedir, 'dist', 'cli.js');
+const outfile = join(basedir, 'dist', 'cli.cjs');
 const prepend = [
 	'#!/usr/bin/env node',
 	'/* eslint-disable */',
