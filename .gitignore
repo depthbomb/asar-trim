@@ -1,7 +1,11 @@
-.vscode
-.env
-.yarn/cache
-.yarn/install-state.gz
-dist/
-tet/
-node_modules/
+.idea/
+.vscode/
+/dist/
+
+# Go build and test artifacts
+/asar-trim
+/asar-trim.exe
+/coverage
+/coverage.*
+*.test
+*.out

@@ -1,0 +1,75 @@
+version: 2
+
+project_name: asar-trim
+
+before:
+  hooks:
+    - go mod verify
+    - go test ./...
+
+builds:
+  - id: asar-trim
+    main: ./cmd/asar-trim
+    binary: asar-trim
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - >-
+        -s -w
+        -X main.version={{ .Version }}
+        -X main.commit={{ .Commit }}
+        -X main.buildDate={{ .CommitDate }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: release
+    ids:
+      - asar-trim
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - LICENSE
+      - THIRD_PARTY_NOTICES.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+sboms:
+  - id: archive-sboms
+    artifacts: archive
+    documents:
+      - "{{ .ArtifactName }}.spdx.json"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs(?:\\(.+\\))?:"
+      - "^test(?:\\(.+\\))?:"
+      - "^chore(?:\\(.+\\))?:"
+      - "^ci(?:\\(.+\\))?:"
+
+release:
+  prerelease: auto
+  header: |
+    `asar-trim` 2.0 provides a native, binary-first CLI for analyzing and
+    optimizing Electron ASAR archives. See the packaged README and the
+    [2.0.0 changelog](https://github.com/depthbomb/asar-trim/blob/v2.0.0/CHANGELOG.md#200---2026-08-25)
+    for the complete feature and safety summary.
